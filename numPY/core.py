@@ -3,14 +3,22 @@ from collections import Iterable
 from functools import reduce
 from itertools import product
 
-from .utils import flatten
+from .utils import broadcast, flatten, parse_shape
 
 
 class NumPyArray:
 
-    def __init__(self, data):
-        flat_data, shape = flatten(data)
+    def __init__(self, data, dtype=None):
+        flat_data = flatten(data)
+        shape = parse_shape(data)
+        if flat_data and dtype is None:
+            dtype = type(flat_data[0])
+        elif flat_data:
+            flat_data = [dtype(e) for e in flat_data]
+        else:
+            dtype = float
         self._data = flat_data
+        self._dtype = dtype
         self._reshape(tuple(shape))
 
     @property
@@ -33,6 +41,14 @@ class NumPyArray:
     def strides(self):
         return self._strides
 
+    @property
+    def dtype(self):
+        return self._dtype
+
+    @property
+    def size(self):
+        return len(self)
+
     def __getitem__(self, slices):
         slices = self._validate_slices(slices)
         viewable = all([isinstance(sl, slice) for sl in slices])
@@ -42,10 +58,8 @@ class NumPyArray:
 
     def __setitem__(self, slices, value):
         slices = self._validate_slices(slices)
-        data, that_shape = flatten(value)
+        that_shape = parse_shape(value)
         this_shape = self._infer_shape(slices)
-        if this_shape != that_shape:
-            raise ValueError(f'')
 
     def __len__(self):
         return len(self._data)
@@ -63,6 +77,9 @@ class NumPyArray:
         self._strides = tuple(reduce(lambda a, b: a * b, self._shape[i + 1:], 1)
                               for i in range(self._ndim))
         return self
+
+    def view(self, shape):
+        pass
 
     def _validate_slices(self, slices):
         if not isinstance(slices, tuple):
@@ -84,7 +101,7 @@ class NumPyArray:
         # reshape
         new_shape = self._infer_shape(slices)
         new_arr = NumPyArray(new_data)
-        new_arr._reshape(new_shape)
+        new_arr.reshape(new_shape)
         return new_arr
 
     def _make_view(self, slices):
