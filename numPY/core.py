@@ -1,5 +1,7 @@
 # -*- coding: utf8 -*-
+from collections import Iterator
 from functools import reduce
+from itertools import product
 
 from .utils import flatten
 
@@ -56,15 +58,32 @@ class NumPyArray:
             slices = (slices,)
         for _ in range(self._ndim - len(slices)):
             slices += (slice(None),)
-        if not len(slices) == self._ndim:
+        valid_slices = [sl for sl in slices if sl is not None]
+        if not len(valid_slices) == self._ndim:
             raise IndexError('too many indices for array')
         return slices
 
     def _make_copy(self, indices):
-        pass
+        # copy data
+        new_data = []
+        for idxs in self._iter_slices(indices):
+            offset = sum([idx * stride
+                          for (idx, stride) in zip(idxs, self._strides)])
+            new_data.append(self._data[offset])
 
     def _make_view(self, indices):
         pass
 
     def _iter_slices(self, slices):
-        pass
+        iters = []
+        for sl, dim in zip(slices, self._shape):
+            if isinstance(sl, slice):
+                start, end, step = sl.indices(dim)
+                iters.append(range(start, end, step))
+            elif isinstance(sl, Iterator):
+                iters.append(sl)
+            elif sl is None:
+                iters.append([0])
+            else:
+                raise ValueError(f'invalid indices type: {type(sl)}')
+        yield from product(*iters)
