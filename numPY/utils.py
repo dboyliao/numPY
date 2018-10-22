@@ -20,4 +20,6 @@ def _parse_shape(data, shape=None):
 
 
 def flatten(data):
+    if not data:
+        return list(), ()
     return list(_gen_flatten(data)), _parse_shape(data)
