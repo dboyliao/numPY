@@ -42,8 +42,10 @@ class NumPyArray:
 
     def __setitem__(self, slices, value):
         slices = self._validate_slices(slices)
-        print(slices)
-        print(value)
+        data, that_shape = flatten(value)
+        this_shape = self._infer_shape(slices)
+        if this_shape != that_shape:
+            raise ValueError(f'')
 
     def __len__(self):
         return len(self._data)

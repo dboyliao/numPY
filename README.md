@@ -9,5 +9,6 @@ It's not going to have any pratical use, just for educational purpose.
 - [x] multidimensional array constructor
 - [x] basic slicing (shared memory view)
 - [x] advanced slicing (copy)
+- [ ] broadcasting
 - [ ] fancy `__setitem__`
 - [ ] pretty `__repr__`
